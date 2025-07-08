@@ -1,4 +1,3 @@
-
 #importing dependencies 
 from datetime import datetime
 import speech_recognition as sr
@@ -25,7 +24,7 @@ appId = 'UYH7W9-EKW6X45PPA'
 wolframClient = wolframalpha.Client(appId)
  
 #allows text to speech library to be useful and retrieve speech 
-def speak(text, rate = 120):
+def speak(text, rate = 170):
     engine.setProperty('rate', rate)
     engine.say(text)
     engine.runAndWait()
@@ -54,19 +53,21 @@ def parseCommand():
     return query
 
 #defining search method  for wikepedia 
-def search_wik(query = ''):
-    searchResults = wikipedia.search(query) #searching for query
+def search_wik(query=''):
+    searchResults = wikipedia.search(query)
     if not searchResults:
-        print('No wikepedia search.')
-        return 'No result recieved'
-    #otherwise, try this 
-    try :
-         wikiPage = wikipedia.page(searchResults[0]) # getting wik page for object specified in terminal
-    except wikipedia.DisambiguationError as error: # catching invalid object specified 
-         wikiPage = wikipedia.page(error.options[0])
+        print('No wikipedia search.')
+        return 'No result received', None
+    try:
+        wikiPage = wikipedia.page(searchResults[0])
+    except wikipedia.DisambiguationError as error:
+        wikiPage = wikipedia.page(error.options[0])
     print(wikiPage.title)
     wikiSummary = str(wikiPage.summary)
-    return wikiSummary
+    # Limit summary to about 30 seconds (roughly 400-500 characters)
+    short_summary = wikiSummary[:500].rsplit('.', 1)[0] + '.'
+    page_url = wikiPage.url
+    return short_summary, page_url
 
 # helper method to parse whether result from wolframalpha is list or dictionary 
 def listorDict(var):
@@ -138,8 +139,10 @@ if __name__ == '__main__':
           if query[0] == 'wikipedia':
                query = ' '.join(query[1:]) #skipping the wikepedia command word 
                speak('Querying the universal databank.')
-               result = search_wik(query)
+               result, page_url = search_wik(query)
                speak(result)
+               speak(f"For more, visit the page: {page_url}")
+               print(f"Wikipedia page: {page_url}")
 
           # Wolfram alpha 
           if query[0] == 'compute' or query[0] == 'computer':
@@ -153,7 +156,7 @@ if __name__ == '__main__':
 
            #note taking 
           if query[0] == 'log':
-               speak ('Ready to record your note ')
+               #speak ('Ready to record your note ')
                newNote = parseCommand().lower()
                
                now = datetime.now().strftime('%Y-%m-$d-%H-%M-%S')
